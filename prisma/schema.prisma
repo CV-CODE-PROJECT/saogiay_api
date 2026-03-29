@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+enum InventoryTransactionType {
+  IMPORT
+  EXPORT
+}
+
+model User {
+  id            String          @id @default(cuid())
+  email         String          @unique
+  passwordHash  String
+  fullName      String
+  role          UserRole        @default(STAFF)
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  revokedTokens RevokedToken[]
+  transactions  InventoryTransaction[]
+}
+
+model RevokedToken {
+  id        String   @id @default(cuid())
+  jti       String   @unique
+  expiresAt DateTime
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Product {
+  id              String                    @id @default(cuid())
+  sku             String                    @unique
+  name            String
+  description     String?
+  unit            String
+  salePrice       Decimal                   @db.Decimal(14, 2)
+  costPrice       Decimal                   @db.Decimal(14, 2)
+  stockQuantity   Int                       @default(0)
+  isActive        Boolean                   @default(true)
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+  transactionItems InventoryTransactionItem[]
+
+  @@index([name])
+}
+
+model InventoryTransaction {
+  id          String                    @id @default(cuid())
+  type        InventoryTransactionType
+  note        String?
+  referenceNo String?
+  totalAmount Decimal                   @db.Decimal(14, 2)
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
+  createdById String
+  createdBy   User                      @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  items       InventoryTransactionItem[]
+
+  @@index([type, createdAt])
+  @@index([createdById])
+}
+
+model InventoryTransactionItem {
+  id            String               @id @default(cuid())
+  transactionId String
+  productId     String
+  quantity      Int
+  unitPrice     Decimal              @db.Decimal(14, 2)
+  lineTotal     Decimal              @db.Decimal(14, 2)
+
+  transaction InventoryTransaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  product     Product              @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([transactionId])
+  @@index([productId])
+}
