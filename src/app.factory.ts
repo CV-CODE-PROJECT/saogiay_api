@@ -30,9 +30,8 @@ export async function createNestExpressApp(server?: Express) {
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('docs', app, swaggerDocument, {
     useGlobalPrefix: true,
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
+    swaggerUiEnabled: false,
+    jsonDocumentUrl: 'docs-json',
   });
 
   await app.init();
