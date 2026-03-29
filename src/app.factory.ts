@@ -28,7 +28,8 @@ export async function createNestExpressApp(server?: Express) {
     .addBearerAuth()
     .build();
   const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('docs', app, swaggerDocument, {
+  SwaggerModule.setup('api/docs', app, swaggerDocument, {
+    useGlobalPrefix: false,
     swaggerOptions: {
       persistAuthorization: true,
     },
